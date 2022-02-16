@@ -32,7 +32,9 @@ Clone Repositoty
    ```bash
    python visualized_sound_pos.py
    ```
-   ![](assets/plot.png)|![aaaa](assets/sound_map.png)
+
+   |aaa|aaa|aaa
+   |![](assets/plot.png)|![](assets/sound_map.png)|
 
    And, you can also estimate the sound location by multiplying the probabilistic sound source map and the current sound direction vector by using MUSIC method.
    ```bash
