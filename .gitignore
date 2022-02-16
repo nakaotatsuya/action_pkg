@@ -1,0 +1,7 @@
+*~
+*.wav
+*.png
+*.jpg
+*.npy
+/sound_pos_data/
+/gauss_data/
