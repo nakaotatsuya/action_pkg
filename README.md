@@ -33,7 +33,7 @@ Clone Repositoty
    python visualized_sound_pos.py
    ```
 
-   |aaa|aaa|
+   | Plots of intersections | Probabilitic sound source map|
    |---|---|
    |![](assets/plot.png)|![](assets/sound_map.png)|
 
