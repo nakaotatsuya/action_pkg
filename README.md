@@ -41,4 +41,6 @@ Clone Repositoty
    ```bash
    roslaunch action_pkg visualize_sound_max.launch
    ```
+#### Estimated sound position
+![](assets/kettle_current_max.png)
 
