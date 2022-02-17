@@ -44,3 +44,6 @@ Clone Repositoty
 #### Estimated sound position
 ![](assets/kettle_current_max.png)
 
+## Master thesis
+
+This is the content of chapter 3.3, 3.4, 3.6 of the master's thesis.
