@@ -133,7 +133,9 @@ class VisualizeSoundMax(MyRobot):
         pub_max_msg.scale.x = 0.1
         pub_max_msg.scale.y = 0.1
         pub_max_msg.scale.z = 0.1
-        
+
+        if len(sd_msg.src) == 0:
+            return
         max_direction = sd_msg.src[0]
         max_point, max_azimuth, max_elevation = self.dir_to_point(max_direction)
         #print("max_point:", max_point)
