@@ -63,10 +63,12 @@ class FindPerson(MyRobot):
         return EmptyResponse()
 
     def subscribe(self):
-        sound_direction = message_filters.Subscriber("/wavdata_node_copy/max", HarkSource)
-        sound_class = message_filters.Subscriber("/sound_classifier/output", ClassificationResult)
+        sound_direction = message_filters.Subscriber("/wavdata_node_copy/max", HarkSource,
+                                                     queue_size=1)
+        sound_class = message_filters.Subscriber("/sound_classifier/output", ClassificationResult,
+                                                 queue_size=1)
         use_async = rospy.get_param("~approximate_sync", True)
-        queue_size = rospy.get_param("~queue_size", 1)
+        queue_size = rospy.get_param("~queue_size", 10)
         self.subs = [sound_direction, sound_class]
         if use_async:
             slop = rospy.get_param("~slop", 0.1)
@@ -89,8 +91,8 @@ class FindPerson(MyRobot):
         max_direction = sd_msg.src[0]
         max_point, _, _ = self.dir_to_point(max_direction)
         #print(max_point)
-        print("callback")
-        print(sc_msg)
+        #print("callback")
+        #print(sc_msg)
         self.sc = np.append(self.sc, sc_msg.label_names[0])
         self.sc = self.sc[-self.sc_len:]
         point = PointStamped()
@@ -100,7 +102,7 @@ class FindPerson(MyRobot):
         point.point.y = max_point[1]
         point.point.z = max_point[2]
         self.point = point
-        print(self.point)
+        #print(self.point)
 
     def subscribe_people_pose(self):
         self.people_pose_sub = rospy.Subscriber("people_pose_estimation_2d/pose", PeoplePoseArray, self.people_pose_callback)
@@ -185,8 +187,10 @@ class FindPerson(MyRobot):
                 rospy.loginfo('failed move_base: {}'.format(
                     self.move_base.get_result()))
                 rospy.loginfo("I couldn't move.")
+                speak_en("I couldn't move")
                 return False
             return True
+        speak_en("Finished")
         return self.move_base
 
     def get_map_to_people(self):
@@ -213,6 +217,8 @@ class FindPerson(MyRobot):
         return ps
 
     def gaze(self):
+        self.sc = np.array([])
+        self.point = None
         self.subscribe()
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
@@ -221,24 +227,32 @@ class FindPerson(MyRobot):
             if (self.point is not None) and all([e == "clap\n" for e in self.sc]):
                 pose = geometry.vector3(self.point.point.x, self.point.point.y, 0)
                 self.whole_body.gaze_point(point=pose, ref_frame_id="tamago1")
+                speak_en("I could hear a clap sound.")
                 break
         self.unsubscribe()
         print("gaze done")
-        speak_en("I found a person.")
 
     def move_to_people(self):
         people_pose = None
         self.subscribe_people_pose()
         rate = rospy.Rate(10)
         start = rospy.Time.now()
-        while (people_pose is None) and not rospy.is_shutdown():
+        while (people_pose is None) and (not rospy.is_shutdown()):
+            print("people pose!!!!!!")
             people_pose = self.get_map_to_people()
             #if (rospy.Time.now() - start).to_sec() > 1.0:
             #    start = rospy.Time.now()
             #rate.sleep()
+            #rate.sleep()
+            # if (rospy.Time.now() -start).to_sec() > 15.0:
+            #     speak_en("I couldn't find anyone.")
+            #     return True
         if people_pose is None:
             rospy.loginfo("can't find people")
             return
+        speak_en("I found a person.")
+        print("poeple_poseeeesoposp")
+        print(people_pose)
         self.unsubscribe_people_pose()
 
         retry = False
@@ -249,9 +263,10 @@ class FindPerson(MyRobot):
         #self.omni_base.go_pose(geometry.pose(x=0.2), 100.0, ref_frame_id="base_link")
         self.move_to_point(people_pose)
         print("move done")
-        speak_en("Finished.")
 
     def run(self, args=None):
+        self.sc = np.array([])
+        self.point = None
         while not rospy.is_shutdown():
             rospy.logwarn("=======================")
             rospy.logwarn("{}".format(self.sc))
@@ -261,9 +276,7 @@ class FindPerson(MyRobot):
             #    print("true")
             #    first = False
             self.gaze()
-            rospy.sleep(5.0)
             self.move_to_people()
-            rospy.sleep(0.1)
             break
 
 

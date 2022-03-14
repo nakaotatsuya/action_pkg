@@ -17,6 +17,7 @@
       gpu: $(arg GPU)
       model_file: $(find jsk_perception)/trained_data/pose_estimation_2d_chainermodel.pkl
       with_depth: true
+      queue_size: 1000
       scales: [0.38]
       stride: 8
     </rosparam>
