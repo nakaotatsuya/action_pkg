@@ -33,6 +33,7 @@ from geometry_msgs.msg import PolygonStamped, PointStamped
 
 from std_srvs.srv import Empty, EmptyResponse
 from my_robot import MyRobot
+from jsk_hsr_startup.tmc_speak import speak_en
 
 class FindPerson(MyRobot):
     def __init__(self, name, **kwargs):
@@ -184,7 +185,6 @@ class FindPerson(MyRobot):
                 rospy.loginfo('failed move_base: {}'.format(
                     self.move_base.get_result()))
                 rospy.loginfo("I couldn't move.")
-                #speak_jp('目的地に移動できませんでした。')
                 return False
             return True
         return self.move_base
@@ -224,6 +224,7 @@ class FindPerson(MyRobot):
                 break
         self.unsubscribe()
         print("gaze done")
+        speak_en("I found a person.")
 
     def move_to_people(self):
         people_pose = None
@@ -248,12 +249,13 @@ class FindPerson(MyRobot):
         #self.omni_base.go_pose(geometry.pose(x=0.2), 100.0, ref_frame_id="base_link")
         self.move_to_point(people_pose)
         print("move done")
+        speak_en("Finished.")
 
     def run(self, args=None):
-        first = True
         while not rospy.is_shutdown():
             rospy.logwarn("=======================")
             rospy.logwarn("{}".format(self.sc))
+            self.whole_body.move_to_neutral()
             #if all([e == "clap\n" for e in self.sc]) and first:
             #    print(self.sc)
             #    print("true")

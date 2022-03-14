@@ -51,6 +51,7 @@ import skrobot
 from skrobot.coordinates.math import quaternion2matrix, matrix2quaternion
 
 from std_srvs.srv import Empty, EmptyResponse
+from jsk_hsr_startup.tmc_speak import speak_en
 
 class CloseFridgeDoor(MyRobot):
     def __init__(self, name, **kwargs):
@@ -673,6 +674,7 @@ class CloseFridgeDoor(MyRobot):
 
                 self.whole_body.move_to_neutral()
                 self.gripper.command(0.5)
+                speak_en("Finished")
 
             except hsrb_interface.exceptions.GripperError:
                 print("gripper error")
@@ -703,6 +705,7 @@ class CloseFridgeDoor(MyRobot):
             print(self.sound_directions)
             if self.sound_classes.count("fridge") >= 5:
                 print("ok")
+                speak_en("I can hear the fridge sound.")
                 direction = -1
                 for d in range(8):
                     if self.sound_directions.count(d*45) > 3:
@@ -729,6 +732,7 @@ class CloseFridgeDoor(MyRobot):
         #     self.run()
         #     return
         self.whole_body.gaze_point(point=point_list[-1], ref_frame_id="tamago1")
+        speak_en("I found the fridge.")
         rospy.sleep(10.0)
         self.close_door()
 
