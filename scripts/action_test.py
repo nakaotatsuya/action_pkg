@@ -21,7 +21,7 @@ from geometry_msgs.msg import WrenchStamped
 import hsrb_interface
 from hsrb_interface import geometry
 from speech_recognition_msgs.msg import SpeechRecognitionCandidates
-
+from hsrb_interface import settings
 from jsk_recognition_msgs.msg import LabelArray, BoundingBoxArray, ClassificationResult, PeoplePoseArray
 from hark_msgs.msg import HarkSource
 
@@ -31,14 +31,21 @@ from jsk_hsr_startup.tmc_speak import speak_jp
 
 from geometry_msgs.msg import PolygonStamped, PointStamped
 
-class FindPerson(RobotAction, SpotMixin):
+from std_srvs.srv import Empty, EmptyResponse
+from my_robot import MyRobot
+
+class FindPerson(MyRobot):
     def __init__(self, name, **kwargs):
         super(FindPerson, self).__init__(name, **kwargs)
+        self.service = rospy.Service(
+            "dummy/buttonB", Empty, self._empty_cb)
         #RobotAction.__init__(self, 'take_plastic_bottle')
         self.move_base = actionlib.SimpleActionClient(
             '/move_base/move', MoveBaseAction)
         self.move_base.wait_for_server()
+        settings._SETTINGS[u'trajectory']['action_timeout'] = 1
         self.whole_body = self.robot.get("whole_body")
+        settings._SETTINGS[u'trajectory']['action_timeout'] = 30.0
         self.omni_base = self.robot.get('omni_base')
         self.sc = np.array([])
         self.sc_len = 2
@@ -48,7 +55,12 @@ class FindPerson(RobotAction, SpotMixin):
 
         #self.subscribe_people_pose()
 
-    def on_start(self):
+    def _empty_cb(self, req):
+        rospy.loginfo("Empty service called!!")
+        self.run()
+        return EmptyResponse()
+
+    def subscribe(self):
         sound_direction = message_filters.Subscriber("/wavdata_node_copy/max", HarkSource)
         sound_class = message_filters.Subscriber("/sound_classifier/output", ClassificationResult)
         use_async = rospy.get_param("~approximate_sync", True)
@@ -62,7 +74,31 @@ class FindPerson(RobotAction, SpotMixin):
             sync = message_filters.TimeSynchronizer(self.subs, queue_size)
         sync.registerCallback(self._callback)
         
-        self.timer = rospy.Timer(rospy.Duration(0.1), self.timer_cb)
+        #self.timer = rospy.Timer(rospy.Duration(0.1), self.timer_cb)
+
+    def unsubscribe(self):
+        for sub in self.subs:
+            sub.unregister()
+
+    def _callback(self, sd_msg, sc_msg):
+        if len(sd_msg.src) == 0:
+            rospy.logwarn("no sd_msg.src")
+            return
+        max_direction = sd_msg.src[0]
+        max_point, _, _ = self.dir_to_point(max_direction)
+        #print(max_point)
+        print("callback")
+        print(sc_msg)
+        self.sc = np.append(self.sc, sc_msg.label_names[0])
+        self.sc = self.sc[-self.sc_len:]
+        point = PointStamped()
+
+        point.header.frame_id = sd_msg.header.frame_id
+        point.point.x = max_point[0]
+        point.point.y = max_point[1]
+        point.point.z = max_point[2]
+        self.point = point
+        print(self.point)
 
     def subscribe_people_pose(self):
         self.people_pose_sub = rospy.Subscriber("people_pose_estimation_2d/pose", PeoplePoseArray, self.people_pose_callback)
@@ -97,54 +133,18 @@ class FindPerson(RobotAction, SpotMixin):
                                   "people_front_spot_2",
                                   "head_rgbd_sensor_rgb_frame")
 
-    def on_end(self):
-        for sub in self.subs:
-            sub.unregister()
-        self.timer.shutdown()
-        
-    def timer_cb(self, args=None):
-        print(self.sc)
-        if self.point and all([e == "clap\n" for e in self.sc]):
-            try:
-                #self.look_at(self.point)
-                #pose = geometry.vector3(self.point.point.x, self.point.point.y, self.point.point.z)
-                pose = geometry.vector3(self.point.point.x, self.point.point.y, 0)
-                #print(pose)
-                self.whole_body.gaze_point(point=pose, ref_frame_id="tamago1")
-                #self.whole_body.gaze_point(point=pose, ref_frame_id=self.point.header.frame_id)
-            except geometry.exceptions.MotionPlanningError:
-                pass
-
-    def _callback(self, sd_msg, sc_msg):
-        max_direction = sd_msg.src[0]
-        max_point = self.dir_to_point(max_direction)
-        #print(max_point)
-        self.sc = np.append(self.sc, sc_msg.label_names[0])
-        self.sc = self.sc[-self.sc_len:]
-        point = PointStamped()
-        if max_point:
-            point.header.frame_id = sd_msg.header.frame_id
-            point.point.x = max_point[0]
-            point.point.y = max_point[1]
-            point.point.z = max_point[2]
-        else:
-            point = None
-        self.point = point
-        #print(self.point)
-
-    def dir_to_point(self, direction):
-        x = np.cos(np.radians(direction.elevation)) * np.cos(np.radians(direction.azimuth))
-        y = np.cos(np.radians(direction.elevation)) * np.sin(np.radians(direction.azimuth))
-        z = np.sin(np.radians(direction.elevation))
-        # print("mic:")
-        # print(x_mic, y_mic, z_mic)
-        # camera_to_mic_coords = self.get_camera_to_mic()
-        # x,y,z = camera_to_mic_coords.transform_vector(
-        #     (x_mic, y_mic, z_mic))
-        point = (x,y,z)
-        #print("camera:")
-        #print(point)
-        return point
+    # def timer_cb(self, args=None):
+    #     # print(self.sc)
+    #     if self.point and all([e == "clap\n" for e in self.sc]):
+    #         try:
+    #             #self.look_at(self.point)
+    #             #pose = geometry.vector3(self.point.point.x, self.point.point.y, self.point.point.z)
+    #             pose = geometry.vector3(self.point.point.x, self.point.point.y, 0)
+    #             #print(pose)
+    #             self.whole_body.gaze_point(point=pose, ref_frame_id="tamago1")
+    #             #self.whole_body.gaze_point(point=pose, ref_frame_id=self.point.header.frame_id)
+    #         except geometry.exceptions.MotionPlanningError:
+    #             rospy.logwarn("MotionPlanningError: occured")
 
     # def get_camera_to_mic(self):
     #     import skrobot
@@ -164,40 +164,12 @@ class FindPerson(RobotAction, SpotMixin):
     #         rot=skrobot.coordinates.math.xyzw2wxyz(rot))
     #     return c
 
-    # def move_to(self, spot_name, wait=True):
-    #     pose_stamped = self.lookup_spot(spot_name)
-    #     if pose_stamped.header.frame_id == '':
-    #         #speak_jp('位置がわかりませんでした。')
-    #         return
-
-    #     pose_stamped.header.stamp = rospy.Time.now()
-    #     pose_stamped.pose.position.z = 0.0
-    #     pose_stamped.header.frame_id = 'map'
-
-    #     #print(pose_stamped)
-        
-    #     goal = MoveBaseGoal()
-    #     goal.target_pose = pose_stamped
-    #     self.move_base.send_goal(goal)
-    #     if wait is True:
-    #         self.move_base.wait_for_result()
-
-    #         action_state = self.move_base.get_state()
-    #         if action_state != GoalStatus.SUCCEEDED:
-    #             rospy.loginfo('failed move_base: {}'.format(action_state))
-    #             rospy.loginfo('failed move_base: {}'.format(
-    #                 self.move_base.get_result()))
-    #             #speak_jp('目的地に移動できませんでした。')
-    #             return False
-    #         return True
-    #     return self.move_base
-
     def move_to_point(self, ps, wait=True):
         pose_stamped = ps
         pose_stamped.header.stamp = rospy.Time.now()
         pose_stamped.pose.position.z = 0.0
         pose_stamped.header.frame_id = "map"
-        print(pose_stamped)
+        #print(pose_stamped)
 
         goal = MoveBaseGoal()
         goal.target_pose = pose_stamped
@@ -236,8 +208,21 @@ class FindPerson(RobotAction, SpotMixin):
         ps.pose.orientation.y = rot[1]
         ps.pose.orientation.z = rot[2]
         ps.pose.orientation.w = rot[3]
-        print(ps)
+        #print(ps)
         return ps
+
+    def gaze(self):
+        self.subscribe()
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            print("==============----------------------")
+            rate.sleep()
+            if (self.point is not None) and all([e == "clap\n" for e in self.sc]):
+                pose = geometry.vector3(self.point.point.x, self.point.point.y, 0)
+                self.whole_body.gaze_point(point=pose, ref_frame_id="tamago1")
+                break
+        self.unsubscribe()
+        print("gaze done")
 
     def move_to_people(self):
         people_pose = None
@@ -256,25 +241,33 @@ class FindPerson(RobotAction, SpotMixin):
 
         retry = False
         #undock
-        self.omni_base.go_rel(0,0, -0.3491)
-        self.omni_base.go_rel(0, 0.2, 0)
+        #self.omni_base.go_rel(0,0, -0.3491)
+        #self.omni_base.go_rel(0, 0.2, 0)
 
         #self.omni_base.go_pose(geometry.pose(x=0.2), 100.0, ref_frame_id="base_link")
         self.move_to_point(people_pose)
+        print("move done")
 
     def run(self, args=None):
         first = True
         while not rospy.is_shutdown():
-            if all([e == "clap\n" for e in self.sc]) and first:
-                print("true")
-                first = False
-                self.move_to_people()
-            rospy.sleep(1)
+            rospy.logwarn("=======================")
+            rospy.logwarn("{}".format(self.sc))
+            #if all([e == "clap\n" for e in self.sc]) and first:
+            #    print(self.sc)
+            #    print("true")
+            #    first = False
+            self.gaze()
+            rospy.sleep(5.0)
+            self.move_to_people()
+            rospy.sleep(0.1)
+            break
+
 
 if __name__ == "__main__":
     rospy.init_node("action_test")
     action = FindPerson("hear sounds")
+    #action()
     #action.move_to("/eng8/6f/room610-wrs-shelf", wait=True)
     #action.move_to_people()
-    #rospy.spin()
-    action()
+    rospy.spin()

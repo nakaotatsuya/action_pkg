@@ -6,6 +6,7 @@ import math
 import sys
 import actionlib
 
+from hsrb_interface import settings
 import rospy
 import rospkg
 import numpy as np
@@ -46,7 +47,9 @@ from cv_bridge import CvBridge
 class RecognizeSoundPos(MyRobot):
     def __init__(self, name):
         super(RecognizeSoundPos, self).__init__(name)
+        settings._SETTINGS[u'trajectory']['action_timeout'] = 1
         self.whole_body = self.robot.get("whole_body")
+        settings._SETTINGS[u'trajectory']['action_timeout'] = 30.0
         self.omni_base = self.robot.get("omni_base")
         rospack = rospkg.RosPack()
         self.client = line_notify.LineNotify(token="PuanmDsKMVCqqXdhpkh7MFth9qxsbhfRPTuBpZHGUvH")
@@ -62,7 +65,7 @@ class RecognizeSoundPos(MyRobot):
         self.sound_class_label = np.array([])
         self.save_dir = osp.join(rospack.get_path(
             "action_pkg"), "img_data")
-        self.collision()
+        #self.collision()
 
     def collision(self):
         collision_world.add_box(x=0.5, y=4.0, z=0.86, pose=geometry.pose(x=3.9, y=0.0, z=0.43), frame_id="map")
@@ -223,7 +226,7 @@ class RecognizeSoundPos(MyRobot):
             self.whole_body.move_to_joint_positions({"arm_lift_joint": 0.4, "arm_flex_joint": -0.7})
         self.whole_body.gaze_point(point=max_point_list[-1], ref_frame_id="tamago1")
 
-        rospy.sleep(1.0)
+        rospy.sleep(3.0)
 
         print("accuracy:", self.accuracy)
         if self.accuracy < self.prob_threshold:

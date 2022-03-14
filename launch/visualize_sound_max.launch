@@ -5,4 +5,10 @@
       label: $(arg label)
     </rosparam>
   </node>
+
+  <!-- <include file="$(find sound_classification)/launch/classify_sound.launch" > -->
+  <!--   <param name="audio_topic" value="/tamago1/audio" /> -->
+  <!--   <param name="train_data" value="610_data" /> -->
+  <!-- </include> -->
+    
 </launch>

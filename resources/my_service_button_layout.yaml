@@ -1,0 +1,9 @@
+- name: 'Close a fridge'
+  service: 'dummy/buttonA'
+  column: 0
+  service_type: 'Empty'
+- name: 'Approach a person'
+  service: 'dummy/buttonB'
+  column: 0
+  service_type: 'Empty'
+

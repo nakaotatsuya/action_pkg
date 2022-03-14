@@ -50,9 +50,14 @@ from cv_bridge import CvBridge, CvBridgeError
 import skrobot
 from skrobot.coordinates.math import quaternion2matrix, matrix2quaternion
 
+from std_srvs.srv import Empty, EmptyResponse
+
 class CloseFridgeDoor(MyRobot):
     def __init__(self, name, **kwargs):
         super(CloseFridgeDoor, self).__init__(name, **kwargs)
+        self.service = rospy.Service(
+            "dummy/buttonA", Empty, self._empty_cb)
+        
         self.move_base = actionlib.SimpleActionClient(
             "/move_base/move", MoveBaseAction)
         self.move_base.wait_for_server()
@@ -81,6 +86,11 @@ class CloseFridgeDoor(MyRobot):
         self.sound_classes = []
         self.sound_directions = []
 
+    def _empty_cb(self, req):
+        rospy.loginfo("Empty service called!!")
+        self.run()
+        return EmptyResponse()
+    
     def subscribe_ssls(self):
         self.sub_ssls = rospy.Subscriber("/online/output_max_cls", ClassificationResult, self.ssls_callback, queue_size=1)
         #self.sub_ssls = rospy.Subscriber("/online/output_max_cls_kettle", ClassificationResult, self.ssls_callback, queue_size=1)
@@ -716,9 +726,9 @@ class CloseFridgeDoor(MyRobot):
                 break
         self.unsubscribe_ssls()
 
-        if len(point_list) == 0:
-            self.run()
-            return
+        # if len(point_list) == 0:
+        #     self.run()
+        #     return
         self.whole_body.gaze_point(point=point_list[-1], ref_frame_id="tamago1")
         rospy.sleep(10.0)
         self.close_door()
@@ -764,9 +774,10 @@ class CloseFridgeDoor(MyRobot):
 if __name__ == "__main__":
     rospy.init_node("close_door_demo")
     act = CloseFridgeDoor("a")
+    rospy.spin()
     #act.close_door()
     #act.stop_button()
     
     #act.stop_button2()
-    act.run()
+    #act.run()
     #act.run2()

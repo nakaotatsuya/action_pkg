@@ -46,4 +46,4 @@ Clone Repositoty
 
 ## Master thesis
 
-This is the content of chapter 3.3, 3.4, 3.6 of the master's thesis.
+This is the content of chapter 3.3.2, 3.3.3, 3.4.2, 3.4.3, 3.6, 4.3 of the master's thesis.
