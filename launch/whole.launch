@@ -27,4 +27,8 @@
   <include file="$(find action_pkg)/launch/visualize_sound_max.launch" >
   </include>
 
+  <!-- actions -->
+  <node name="close_door_demo" pkg="action_pkg" type="action.py" output="screen" />
+  <node name="action_test" pkg="action_pkg" type="action_test.py" output="screen" />
+
 </launch>
