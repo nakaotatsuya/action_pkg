@@ -52,6 +52,7 @@ class FindPerson(MyRobot):
         self.point = None
         self.listener = tf.TransformListener()
         self.br = tf.TransformBroadcaster()
+        print("abababababa")
 
         #self.subscribe_people_pose()
 

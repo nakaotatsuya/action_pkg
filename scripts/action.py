@@ -74,25 +74,24 @@ class CloseFridgeDoor(MyRobot):
         self.bridge = CvBridge()
 
         self.camera_info_msg = rospy.get_param(
-            "~camera_info", "/remote/head_rgbd_sensor/depth_registered/camera_info")
+            "~camera_info", "/pikmin/head_rgbd_sensor/depth_registered/camera_info")
         self.camera_info = rospy.wait_for_message(
             self.camera_info_msg, CameraInfo)
         self.camera_model = PinholeCameraModel.from_camera_info(self.camera_info)
-        print("finish init")
-
         self.sound_class = None
         self.sound_direction = None
 
         self.sound_classes = []
         self.sound_directions = []
-
+        print("finish init")
+        
     def _empty_cb(self, req):
         rospy.loginfo("Empty service called!!")
         self.run()
         return EmptyResponse()
     
     def subscribe_ssls(self):
-        self.sub_ssls = rospy.Subscriber("/online/output_max_cls", ClassificationResult, self.ssls_callback, queue_size=1)
+        self.sub_ssls = rospy.Subscriber("/online/online/output_max_cls", ClassificationResult, self.ssls_callback, queue_size=1)
         #self.sub_ssls = rospy.Subscriber("/online/output_max_cls_kettle", ClassificationResult, self.ssls_callback, queue_size=1)
 
     def unsubscribe_ssls(self):
