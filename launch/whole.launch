@@ -1,0 +1,20 @@
+<launch>
+
+  <include file="$(find hark_sound_source_localization)/launch/hark_startup.launch" >
+  </include>
+
+  <include file="$(find sound_classification)/launch/classify_sound3.launch" >
+    <arg name="audio_topic" value="/tamago1/audio" />
+    <arg name="train_data" value="aaaaa" />
+  </include>
+
+  <include file="$(find action_pkg)/launch/action_test.launch" >
+  </include>
+
+  <include file="$(find action_pkg)/launch/action.launch" >
+  </include>
+
+  <include file="$(find action_pkg)/launch/visualize_sound_max.launch" >
+  </include>
+
+</launch>
