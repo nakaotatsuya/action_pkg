@@ -24,6 +24,15 @@
     </rosparam>
   </node>
 
+  <group ns="people_pose_estimation_2d" >
+    <node name="republish"
+          pkg="image_transport" type="republish"
+          args="raw compressed">
+      <remap from="in" to="output" />
+      <remap from="out" to="output" />
+    </node>
+  </group>
+
   <node name="people_mask_publisher"
         pkg="jsk_perception" type="people_mask_publisher.py"
         output="screen">

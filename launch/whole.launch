@@ -8,7 +8,17 @@
     <arg name="train_data" value="aaaaa" />
   </include>
 
-  <include file="$(find action_pkg)/launch/action_test.launch" >
+  <include file="$(find action_pkg)/launch/republish.launch" >
+    <arg name="ns" value="pikmin" />
+    <arg name="use_throttled_image" value="false" />
+  </include>
+
+  <include file="$(find action_pkg)/launch/people_pose_estimation_2d.launch" >
+    <arg name="INPUT_IMAGE" default="/pikmin/head_rgbd_sensor/rgb/image_rect_color" />
+    <arg name="INPUT_DEPTH_IMAGE" default="/pikmin/head_rgbd_sensor/depth_registered/hw_registered/image_rect_raw" />
+    <arg name="INPUT_CAMERA_INFO" default="/pikmin/head_rgbd_sensor/rgb/camera_info" />
+    <arg name="gui" value="false" />
+    <arg name="GPU" value="0" />
   </include>
 
   <include file="$(find action_pkg)/launch/action.launch" >

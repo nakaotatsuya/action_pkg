@@ -35,6 +35,15 @@
     </rosparam>
   </node>
 
+  <group ns="mask_rcnn_instance_segmentation_fridge" >
+    <node name="republish"
+          pkg="image_transport" type="republish"
+          args="raw compressed">
+      <remap from="in" to="output/viz" />
+      <remap from="out" to="output/viz" />
+    </node>
+  </group>
+
   <node name="instance_cluster_point_indices_decomposer_fridge"
         pkg="nodelet" type="nodelet"
         args="standalone jsk_pcl/ClusterPointIndicesDecomposer">

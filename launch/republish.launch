@@ -1,0 +1,12 @@
+<launch>
+  <arg name="ns" default="remote" doc="default namespace of camera" />
+  <arg name="use_throttled_image" default="true" />
+
+  <group ns="$(arg ns)" >
+    <include file="$(find jsk_hsr_startup)/launch/republish_images.launch" >
+      <arg name="use_throttled_image" value="$(arg use_throttled_image)" />
+      <arg name="camera" value="head_rgbd_sensor" />
+    </include>
+  </group>
+
+</launch>
